@@ -18,7 +18,7 @@ class RabbitRPCClient:
         self.host = config.RABBIT_HOST
         self.port = config.RABBIT_PORT
         self.user = config.RABBIT_USER
-        self.password = config.RABBIT_PASSWORD
+        self.password = config.RABBIT_PASS
         self.exchange_name = exchange_name
         self.credentials = pika.PlainCredentials(self.user, self.password)
         self.connect()
