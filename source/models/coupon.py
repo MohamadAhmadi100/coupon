@@ -6,8 +6,8 @@ from source.modules.date_convertor import jalali_datetime
 
 
 class Coupon:
-    def __init__(self, coupon_main_code: str = None, coupon_id: int = 0, coupon_name: str = None):
-        self.coupon_main_code = coupon_main_code
+    def __init__(self, token: str = None, coupon_id: int = 0, coupon_name: str = None, prefix: str = ""):
+        self.token = token
         self.coupon_name = coupon_name
         self.coupon_tokens: list = []
         self.coupon_id = coupon_id
@@ -25,7 +25,7 @@ class Coupon:
         self.customer_sold_number: int = 0
         self.bought_customer_ids: list = []
         self.bought_customer_groups: list = []
-        self.prefix: str = ""
+        self.prefix: str = prefix
 
     def get_next_sequence_coupon_id(self):
         """
@@ -54,6 +54,13 @@ class Coupon:
         with MongoConnection() as mongo:
             return bool(mongo.coupon.find_one(query_operator, projection_operator))
 
+    @staticmethod
+    def is_prefix_exists(prefix: str) -> bool:
+        query_operator = {"couponPrefix": prefix}
+        projection_operator = {"_id": 0}
+        with MongoConnection() as mongo:
+            return bool(mongo.coupon.find_one(query_operator, projection_operator))
+
     def is_coupon_exists(self) -> bool:
         query_operator = {"couponId": self.coupon_id}
         projection_operator = {"_id": 0}
@@ -67,7 +74,8 @@ class Coupon:
              start_date,
              end_date,
              coupon_type,
-             prefix
+             prefix,
+             tokens_list
              ):
         if not self.get_next_sequence_coupon_id():
             return False
@@ -86,7 +94,8 @@ class Coupon:
             "couponJalaliEndDate": end_date,
             "couponType": coupon_type,
             "couponPrefix": prefix or None,
-            "couponConditions": {}
+            "couponConditions": {},
+            "couponTokens": tokens_list
         }
         with MongoConnection() as mongo:
             result: object = mongo.coupon.insert_one(coupon_data)
@@ -105,7 +114,7 @@ class Coupon:
         query_operator = {"couponId": self.coupon_id}
         projection_operator = {"_id": 0}
         with MongoConnection() as mongo:
-            coupon = mongo.basket.find_one(query_operator, projection_operator)
+            coupon = mongo.coupon.find_one(query_operator, projection_operator)
             modify_operator = {
                 "$set": {
                     "couponName": coupon_name or coupon.get("couponName"),
@@ -137,3 +146,150 @@ class Coupon:
             ):
                 return bool(result.acknowledged)
         return False
+
+    def get_coupon(self):
+        query_operator = {"couponId": self.coupon_id}
+        projection_operator = {"_id": 0}
+        with MongoConnection() as mongo:
+            try:
+                return mongo.coupon.find_one(query_operator, projection_operator)
+            except Exception:
+                return False
+
+    def delete(self):
+        query_operator = {"couponId": self.coupon_id}
+        modify_operator = {
+            "$set": {
+                "couponStatus": "archive",
+                "couponJalaliDeleteTime": jalali_datetime(datetime.now()),
+            }
+        }
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.update_one(
+                    query_operator,
+                    modify_operator,
+            ):
+                return bool(result.acknowledged)
+        return
+
+    def activate(self):
+        query_operator = {"couponId": self.coupon_id}
+        modify_operator = {
+            "$set": {
+                "couponStatus": "active",
+                "couponJalaliActivateTime": jalali_datetime(datetime.now()),
+            }
+        }
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.update_one(
+                    query_operator,
+                    modify_operator,
+            ):
+                return bool(result.acknowledged)
+        return
+
+    def deactivate(self):
+        query_operator = {"couponId": self.coupon_id}
+        modify_operator = {
+            "$set": {
+                "couponStatus": "pend"
+            }
+        }
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.update_one(
+                    query_operator,
+                    modify_operator
+            ):
+                return bool(result.acknowledged)
+        return
+
+    def get_coupon_by_prefix(self):
+        query_operator = {"prefix": self.prefix}
+        projection_operator = {"_id": 0}
+        with MongoConnection() as mongo:
+            try:
+                if result := mongo.coupon.find_one(query_operator, projection_operator):
+                    self.coupon_id = result.get("couponId")
+                    return result
+                return False
+            except Exception:
+                return False
+
+    def check_coupon_is_valid(self):
+        query_operator = {"prefix": self.prefix}
+        projection_operator = {"_id": 0}
+        with MongoConnection() as mongo:
+            try:
+                if result := mongo.coupon.find_one(query_operator, projection_operator):
+                    return (result.get("couponWholeSoldNumber") < result.get("couponWholeSalesNumber") and result.get(
+                        "couponJalaliStartDate") >= jalali_datetime(datetime.now()) >= result.get(
+                        "couponJalaliEndDate") and result.get("couponDailySoldNumber") < result.get(
+                        "couponDailySalesNumber") and result.get("couponStatus") == "active"), result
+            except Exception:
+                return False
+
+    def check_public_token(self, token: str, customer_id: int):
+        query_operator = {"prefix": self.prefix}
+        projection_operator = {"_id": 0}
+        with MongoConnection() as mongo:
+            try:
+                if result := mongo.coupon.find_one(query_operator, projection_operator):
+                    ...
+            except Exception:
+                return False
+
+    def check_coupon_for_private_customer(self, token: str, customer_id: int, max_use: int):
+        with MongoConnection() as mongo:
+            return list(mongo.coupon.aggregate([
+                {
+                    "$match":
+                        {
+                            "couponId": self.coupon_id,
+                            "couponTokens": {
+                                "$elemMatch":
+                                    {
+                                        "token": token,
+                                        "customerId": customer_id,
+                                        "used": {"$lt": max_use}
+                                    }
+                            }
+                        }
+                }
+            ]))
+
+    def check_coupon_for_public_customer(self, token: str, customer_id: int, max_use):
+        with MongoConnection() as mongo:
+            result = list(mongo.coupon.aggregate([
+                {
+                    "$match":
+                        {
+                            "couponId": self.coupon_id,
+                            "couponTokens": {
+                                "$elemMatch":
+                                    {
+                                        "token": token,
+                                        "customerId": customer_id,
+                                        "used": {"$gte": max_use}
+                                    }
+                            }
+                        }
+                }
+            ]))
+            return False if len(result) else result
+
+    def check_token(self, token: str):
+        with MongoConnection() as mongo:
+            return list(mongo.coupon.aggregate([
+                {
+                    "$match":
+                        {
+                            "couponId": self.coupon_id,
+                            "couponTokens": {
+                                "$elemMatch":
+                                    {
+                                        "token": token
+                                    }
+                            }
+                        }
+                }
+            ]))

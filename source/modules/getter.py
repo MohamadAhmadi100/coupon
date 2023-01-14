@@ -16,14 +16,14 @@ class GetData:
         sort_type = self.handle_sort(sort_type)
         with MongoConnection() as mongo:
             try:
-                baskets = list(mongo.basket.find(
-                    queries, {"_id": False, "basketJalaliCompleteTime": 0, "basketJalaliDeleteTime": 0}).limit(
+                coupons = list(mongo.coupon.find(
+                    queries, {"_id": False, "couponCreateTime": 0}).limit(
                     int(number_of_records)).skip(
                     int(number_of_records) * (int(page) - 1)).sort(sort_name,
                                                                    sort_type))
-                total_count = mongo.basket.count_documents(queries)
+                total_count = mongo.coupon.count_documents(queries)
                 data = {
-                    "data": baskets,
+                    "data": coupons,
                     "totalCount": total_count,
                 }
                 return {"success": True, "message": data, "status_code": 200}

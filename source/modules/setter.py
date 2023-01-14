@@ -27,6 +27,8 @@ class Filter:
             elif value.get("end"):
                 value["$gt"] = value.get("end")
                 del value["end"]
+            else:
+                continue
             period[filter_] = value
         return period
 
