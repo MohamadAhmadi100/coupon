@@ -246,12 +246,17 @@ class Coupon:
                         {
                             "couponId": self.coupon_id,
                             "couponTokens": {
-                                "$elemMatch":
+                                "$and": [{
+                                    "$elemMatch":
+                                        {
+                                            "token": token,
+                                            "used": {"$lt": max_use}
+                                        }
+                                },
                                     {
-                                        "token": token,
-                                        "customerId": customer_id,
-                                        "used": {"$lt": max_use}
+                                        "customerId": customer_id
                                     }
+                                ]
                             }
                         }
                 }

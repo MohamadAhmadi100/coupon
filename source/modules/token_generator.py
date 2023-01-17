@@ -5,7 +5,7 @@ import string
 class Token:
     def __init__(self):
         self.token: str = ""
-        self.token_length: int = 6
+        self.token_length: int = 4
 
     def generator(self, prefix) -> str:
         self.token: str = f"{prefix.upper()}-" + "".join(
