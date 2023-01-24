@@ -51,7 +51,7 @@ def set_and_edit_condition(coupon_id: int, condition_type: str, data: dict, staf
     if coupon.set_condition(condition_type=condition_type, data=dict(data, **{"priority": priority})):
         log.save_condition_log(coupon_id=coupon_id, staff_id=staff_user_id)
         return {"success": True, "message": "شرط با موفقیت ثبت شد", "data": {"couponId": coupon_id},
-                "status_code": 201}
+                "status_code": 200}
     return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 417}
 
 

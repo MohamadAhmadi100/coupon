@@ -1,4 +1,51 @@
 from source.models.coupon import Coupon
+from source.modules.cart_checker import CheckCart
+
+
+def get_sorted_conditions(coupon):
+    conditions = coupon.get_all_conditions()
+    return {condition: conditions.get(condition) for condition in
+            sorted(conditions, key=lambda condition: (conditions[condition]["priority"]), reverse=True)}
+
+
+result = {}
+
+
+def check_conditions(customer_id: int, cart: dict, coupon, coupon_data):
+    conditions = get_sorted_conditions(coupon)
+    if not conditions:
+        return {"success": False, "error": "کد وارد شده قابل استفاده نیست", "status_code": 404}
+    for condition, data in conditions.items():
+        check_cart = CheckCart(customer_id, cart, coupon_data)
+        exec(f"global result; result = check_cart.{condition}({data})")
+        if result:
+            return {"success": True, "message": result.get("message"), "coupon": result.get("coupon"),
+                    "data": result.get("data"), "status_code": 200}
+    return {"success": False, "error": "کد مورد نظر برای شما قابل استفاده نیست", "status_code": 404}
+
+
+def check_coupon_type(customer_id: int, token: str, cart: dict, coupon, coupon_data):
+    if coupon_data.get("couponType") == "private":
+        result = coupon.check_coupon_for_private_customer(token=token, customer_id=customer_id,
+                                                          max_use=coupon_data.get("couponCustomerSalesNumber") or 2)
+        if not result:
+            return {"success": False, "error": "این کد متعلق به شخص دیگری است", "status_code": 404}
+    else:
+        result = coupon.check_coupon_for_public_customer(token=token, customer_id=customer_id,
+                                                         max_use=coupon_data.get("couponCustomerSalesNumber") or 2)
+        if not result:
+            return {"success": False, "error": "تعداد استفاده از این کد به حد نصاب رسیده است", "status_code": 404}
+    return check_conditions(customer_id=customer_id, cart=cart, coupon=coupon, coupon_data=coupon_data)
+
+
+def get_token(customer_id: int, token: str, cart: dict, coupon):
+    if not coupon.get_coupon_by_prefix():
+        return {"success": False, "error": "کد مورد نظر موجود نیست", "status_code": 404}
+    if not coupon.check_token(token=token):
+        return {"success": False, "error": "کد وارد شده اشتباه است", "status_code": 404}
+    check_coupon_valid, coupon_data = coupon.check_coupon_is_valid()
+    return check_coupon_type(customer_id, token, cart, coupon, coupon_data) if check_coupon_valid else {
+        "success": False, "error": "زمان استفاده از این کد به پایان رسیده است", "status_code": 422}
 
 
 def check_coupon(customer_id: int, token: str, cart: dict):
@@ -6,30 +53,7 @@ def check_coupon(customer_id: int, token: str, cart: dict):
         return {"success": False, "error": "کد وارد شده اشتباه است", "status_code": 404}
     prefix = token.split("-")[0].upper()
     coupon = Coupon(prefix=prefix)
-    # if not coupon.get_coupon_by_prefix():
-    #     return {"success": False, "error": "کد مورد نظر موجود نیست", "status_code": 404}
-    check_coupon_valid, coupon_data = coupon.check_coupon_is_valid()
-    # if not check_coupon_valid:
-    #     return {"success": False, "error": "زمان استفاده از این کد به پایان رسیده است", "status_code": 422}
-    coupon.coupon_id = coupon_data.get("couponId")
-    # if coupon_data.get("couponType") == "private":
-    #     result = coupon.check_coupon_for_private_customer(token=token, customer_id=customer_id,
-    #                                                       max_use=coupon_data.get("couponCustomerSalesNumber") or 2)
-    #     if not result:
-    #         return {"success": False, "error": "این کد متعلق به شخص دیگری است", "status_code": 404}
-    #     result = coupon.check_coupon_for_public_customer(token=token, customer_id=customer_id,
-    #                                                      max_use=coupon_data.get("couponCustomerSalesNumber") or 2)
-    #     if not result:
-    #         return {"success": False, "error": "تعداد استفاده از این کد به حد نصاب رسیده است", "status_code": 404}
-    # if not coupon.check_token(token=token):
-    #     return {"success": False, "error": "کد وارد شده اشتباه است", "status_code": 404}
-    # if check_token is None:
-    #     return {"success": False, "error": "کد وارد شده اشتباه است", "status_code": 404}
-    # elif result.get("couponType") == "private" and check_token is False:
-    #     return {"success": False, "error": "کد وارد شده متعلق به شخص دیگری است", "status_code": 404}
-
-    return {"success": True, "message": "مبلغ 322000 تومان از سبد شما کسر شد",
-            "data": dict(cart, **{"coupon": coupon_data}), "status_code": 200}
+    return get_token(customer_id, token, cart, coupon)
 
 # coupon = Coupon(prefix="ananas", coupon_id=1006)
-# print(coupon.check_coupon_for_private_customer(token="ANANAS-34538B", customer_id=123, max_use=2))
+# print(check_coupon(customer_id=12, token="STRING-BEA5", cart={"dd": "dff"}))

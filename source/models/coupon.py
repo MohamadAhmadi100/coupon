@@ -204,7 +204,7 @@ class Coupon:
         return
 
     def get_coupon_by_prefix(self):
-        query_operator = {"prefix": self.prefix}
+        query_operator = {"couponPrefix": self.prefix}
         projection_operator = {"_id": 0}
         with MongoConnection() as mongo:
             try:
@@ -216,13 +216,13 @@ class Coupon:
                 return False
 
     def check_coupon_is_valid(self):
-        query_operator = {"prefix": self.prefix}
+        query_operator = {"couponPrefix": self.prefix}
         projection_operator = {"_id": 0}
         with MongoConnection() as mongo:
             try:
                 if result := mongo.coupon.find_one(query_operator, projection_operator):
                     return (result.get("couponWholeSoldNumber") < result.get("couponWholeSalesNumber") and result.get(
-                        "couponJalaliStartDate") >= jalali_datetime(datetime.now()) >= result.get(
+                        "couponJalaliStartDate") <= jalali_datetime(datetime.now()) <= result.get(
                         "couponJalaliEndDate") and result.get("couponDailySoldNumber") < result.get(
                         "couponDailySalesNumber") and result.get("couponStatus") == "active"), result
             except Exception:
@@ -272,7 +272,7 @@ class Coupon:
                             "couponTokens": {
                                 "$elemMatch":
                                     {
-                                        "token": token,
+                                        # "token": token,
                                         "customerId": customer_id,
                                         "used": {"$gte": max_use}
                                     }
@@ -280,7 +280,7 @@ class Coupon:
                         }
                 }
             ]))
-            return False if len(result) else result
+            return not len(result)
 
     def check_token(self, token: str):
         with MongoConnection() as mongo:
@@ -298,3 +298,9 @@ class Coupon:
                         }
                 }
             ]))
+
+    def get_all_conditions(self):
+        with MongoConnection() as mongo:
+            return mongo.coupon.find_one(
+                {"couponId": self.coupon_id},
+                {"couponConditions": 1, "_id": 0}).get("couponConditions") or False
