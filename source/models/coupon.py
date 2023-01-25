@@ -132,6 +132,22 @@ class Coupon:
                 return bool(result.acknowledged)
         return
 
+    def get_next_auto_priority(self) -> int:
+        query_operator = {"couponId": self.coupon_id}
+        projection_operator = {"_id": 0, "couponConditions": 1}
+        with MongoConnection() as mongo:
+            try:
+                result = mongo.coupon.find_one(
+                    query_operator, projection_operator
+                )
+                priority = 0
+                for condition, value in result.get("couponConditions").items():
+                    if value.get("priority") > priority:
+                        priority = value.get("priority")
+                return priority + 1
+            except Exception:
+                return 1
+
     def set_condition(self, condition_type: str, data: dict) -> bool:
         query_operator = {"couponId": self.coupon_id}
         modify_operator = {
@@ -304,3 +320,11 @@ class Coupon:
             return mongo.coupon.find_one(
                 {"couponId": self.coupon_id},
                 {"couponConditions": 1, "_id": 0}).get("couponConditions") or False
+
+    def use_coupon(self, coupon_id, customer_id, token, order_number):
+        with MongoConnection() as mongo:
+            mongo.coupon.update_one(
+                
+            )
+
+

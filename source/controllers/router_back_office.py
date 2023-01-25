@@ -42,10 +42,12 @@ def edit_coupon(data: str, staff_user_id: int = 20000):
     return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 417}
 
 
-def set_and_edit_condition(coupon_id: int, condition_type: str, data: dict, staff_user_id: int, priority: int = 1):
+def set_and_edit_condition(coupon_id: int, condition_type: str, data: dict, staff_user_id: int, priority: int = 0):
     coupon = Coupon(coupon_id=coupon_id)
     if not coupon.is_coupon_exists():
         return {"success": False, "error": "کد تخفیف وجود ندارد", "status_code": 404}
+    if not priority:
+        priority = coupon.get_next_auto_priority()
     # if coupon.get_coupon().get("couponType") == "private" and condition_type != "customer":
     #     return {"success": False, "error": "برای کدهای اختصاصی فقط شرط مشتری خاص فعال است", "status_code": 422}
     if coupon.set_condition(condition_type=condition_type, data=dict(data, **{"priority": priority})):
