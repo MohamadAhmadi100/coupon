@@ -36,17 +36,17 @@ class CheckCart:
                     "data": {"couponPrice": final_price, "discount": discount}, "coupon": coupon}
         return False
 
-    def product(self, data):
-        return {"message": "dssddsd", "coupon": data}
+    def product(self):
+        return {"message": "dssddsd"}
 
-    def customerGroup(self, data):
-        return {"message": "dssddsd", "coupon": data}
+    def customerGroup(self):
+        return {"message": "dssddsd"}
 
-    def customer(self, data):
-        return {"message": "dssddsd", "coupon": data}
+    def customer(self):
+        return {"message": "dssddsd"}
 
-    def event(self, data):
-        return {"message": "dssddsd", "coupon": data}
+    def event(self):
+        return {"message": "dssddsd"}
 
-    def minProductQuantity(self, data):
-        return {"message": "dssddsd", "coupon": data}
+    def minProductQuantity(self):
+        return {"message": "dssddsd"}
