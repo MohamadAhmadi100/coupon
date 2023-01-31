@@ -9,12 +9,13 @@ class CartInitialize:
 
 
 class CheckCart:
-    def __init__(self, customer_id: int, cart: dict, coupon_data):
+    def __init__(self, customer_id: int, cart: dict, coupon_data, token: str):
         self.customer_id = customer_id
         self.cart = cart
         self.coupon_data = coupon_data
+        self.token = token
 
-    def category(self, data):
+    def category(self):
         return False
 
     def basketSum(self):
@@ -30,7 +31,8 @@ class CheckCart:
                 "couponId": self.coupon_data.get("couponId"),
                 "condition": condition,
                 "couponCartPrice": final_price,
-                "discountValue": discount
+                "discountValue": discount,
+                "token": self.token
             }
             return {"message": f"مبلغ {discount} تومان تخفیف به شما تعلق گرفت ",
                     "data": {"couponPrice": final_price, "discount": discount}, "coupon": coupon}

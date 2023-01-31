@@ -11,12 +11,12 @@ def get_sorted_conditions(coupon):
 result = {}
 
 
-def check_conditions(customer_id: int, cart: dict, coupon, coupon_data):
+def check_conditions(customer_id: int, cart: dict, coupon, coupon_data, token):
     conditions = get_sorted_conditions(coupon)
     if not conditions:
         return {"success": False, "error": "کد وارد شده قابل استفاده نیست", "status_code": 404}
     for condition, data in conditions.items():
-        check_cart = CheckCart(customer_id, cart, coupon_data)
+        check_cart = CheckCart(customer_id, cart, coupon_data, token)
         exec(f"global result; result = check_cart.{condition}()")
         if result:
             return {"success": True, "message": result.get("message"), "coupon": result.get("coupon"),
@@ -35,7 +35,7 @@ def check_coupon_type(customer_id: int, token: str, cart: dict, coupon, coupon_d
                                                          max_use=coupon_data.get("couponCustomerSalesNumber") or 2)
         if not result:
             return {"success": False, "error": "تعداد استفاده از این کد به حد نصاب رسیده است", "status_code": 404}
-    return check_conditions(customer_id=customer_id, cart=cart, coupon=coupon, coupon_data=coupon_data)
+    return check_conditions(customer_id=customer_id, cart=cart, coupon=coupon, coupon_data=coupon_data, token=token)
 
 
 def get_token(customer_id: int, token: str, cart: dict, coupon):
