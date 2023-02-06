@@ -120,5 +120,10 @@ def deactivate_coupon(coupon_id: int, staff_user_id: int = 20000):
     return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}
 
 
-def use_coupon(coupon_id, customer_id, order_number, token):
-    ...
+def use_coupon(coupon_id, customer_id, token, order_number):
+    coupon = Coupon(coupon_id=coupon_id)
+    if not coupon.use_coupon(coupon_id, customer_id, token, order_number):
+        return {"success": False, "error": "کد تخفیف مورد نظر موجود نیست", "status_code": 404}
+    if coupon.deactivate():
+        return {"success": True, "message": "کد تخفیف با موفقیت غیر فعال شد", "status_code": 200}
+    return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}

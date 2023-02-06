@@ -322,9 +322,19 @@ class Coupon:
                 {"couponConditions": 1, "_id": 0}).get("couponConditions") or False
 
     def use_coupon(self, coupon_id, customer_id, token, order_number):
+        query_operator = {"couponId": self.coupon_id}
+        modify_operator = {
+            "$inc": {
+                "couponWholeSoldNumber": 1,
+            },
+            "$set": {
+                "couponStatus": "archive",
+                "couponJalaliDeleteTime": jalali_datetime(datetime.now()),
+            }
+        }
         with MongoConnection() as mongo:
-            mongo.coupon.update_one(
-                
-            )
-
-
+            if result := mongo.coupon.update_one(
+                    query_operator,
+                    modify_operator,
+            ):
+                return

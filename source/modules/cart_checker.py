@@ -39,16 +39,16 @@ class CheckCart:
         return False
 
     def product(self):
-        return {"message": "dssddsd"}
+        return False
 
     def customerGroup(self):
-        return {"message": "dssddsd"}
+        return False
 
     def customer(self):
-        return {"message": "dssddsd"}
+        return False
 
     def event(self):
-        return {"message": "dssddsd"}
+        return False
 
     def minProductQuantity(self):
-        return {"message": "dssddsd"}
+        return False

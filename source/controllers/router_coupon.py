@@ -51,6 +51,8 @@ def get_token(customer_id: int, token: str, cart: dict, coupon):
 def check_coupon(customer_id: int, token: str, cart: dict):
     if type(token) != str or "-" not in token:
         return {"success": False, "error": "کد وارد شده اشتباه است", "status_code": 404}
+    if not cart.get("products") and not cart.get("baskets"):
+        return {"success": False, "error": "سبد خرید شما خالی است", "status_code": 404}
     prefix = token.split("-")[0].upper()
     coupon = Coupon(prefix=prefix)
     return get_token(customer_id, token, cart, coupon)
