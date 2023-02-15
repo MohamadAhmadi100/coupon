@@ -20,7 +20,6 @@ class Coupon:
         self.whole_sales_number: int = 0
         self.whole_sold_number: int = 0
         self.daily_sales_number: int = 0
-        self.daily_sold_number: int = 0
         self.customer_sales_number: int = 0
         self.customer_sold_number: int = 0
         self.bought_customer_ids: list = []
@@ -86,7 +85,6 @@ class Coupon:
             "couponJalaliCreateTime": jalali_datetime(datetime.now()),
             "couponStatus": "pend",
             "couponCustomerSalesNumber": customer_sales_number,
-            "couponDailySoldNumber": 0,
             "couponDailySalesNumber": coupon_daily_sales_number,
             "couponWholeSoldNumber": 0,
             "couponWholeSalesNumber": whole_sales_number,
@@ -321,7 +319,17 @@ class Coupon:
                 {"couponId": self.coupon_id},
                 {"couponConditions": 1, "_id": 0}).get("couponConditions") or False
 
-    def use_coupon(self, coupon_id, customer_id, token, order_number):
+    def get_coupon_type(self):
+        query_operator = {"couponId": self.coupon_id}
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.find_one(
+                    query_operator,
+                    {"_id": 0, "couponType": 1},
+            ):
+                return result
+            return False
+
+    def use_public_coupon(self, coupon_id, customer_id, token, order_number):
         query_operator = {"couponId": self.coupon_id}
         modify_operator = {
             "$inc": {
@@ -329,7 +337,29 @@ class Coupon:
             },
             "$set": {
                 "couponStatus": "archive",
-                "couponJalaliDeleteTime": jalali_datetime(datetime.now()),
+                "couponJalaliUseTime": jalali_datetime(datetime.now()),
+            }
+        }
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.aggregate([
+                {"$match": {"couponId": self.coupon_id}},
+                {"$project": {
+                    "couponTokens": {
+
+                    }
+                }},
+            ]):
+                return
+
+    def use_private_coupon(self, coupon_id, customer_id, token, order_number):
+        query_operator = {"couponId": self.coupon_id}
+        modify_operator = {
+            "$inc": {
+                "couponWholeSoldNumber": 1,
+            },
+            "$set": {
+                "couponStatus": "archive",
+                "couponJalaliUseTime": jalali_datetime(datetime.now()),
             }
         }
         with MongoConnection() as mongo:
