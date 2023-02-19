@@ -55,7 +55,6 @@ def check_coupon(customer_id: int, token: str, cart: dict):
         return {"success": False, "error": "سبد خرید شما خالی است", "status_code": 404}
     prefix = token.split("-")[0].upper()
     coupon = Coupon(prefix=prefix)
-    print("*****")
     return get_token(customer_id, token, cart, coupon)
 
 
