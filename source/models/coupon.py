@@ -237,10 +237,9 @@ class Coupon:
                 if result := mongo.coupon.find_one(query_operator, projection_operator):
                     return (result.get("couponWholeSoldNumber") < result.get("couponWholeSalesNumber") and result.get(
                         "couponJalaliStartDate") <= jalali_datetime(datetime.now()) <= result.get(
-                        "couponJalaliEndDate") and result.get("couponDailySoldNumber") < result.get(
-                        "couponDailySalesNumber") and result.get("couponStatus") == "active"), result
+                        "couponJalaliEndDate") and result.get("couponStatus") == "active"), result
             except Exception:
-                return False
+                return False, False
 
     def check_public_token(self, token: str, customer_id: int):
         query_operator = {"prefix": self.prefix}
@@ -326,7 +325,7 @@ class Coupon:
                     query_operator,
                     {"_id": 0, "couponType": 1},
             ):
-                return result
+                return result.get("couponType")
             return False
 
     def use_public_coupon(self, coupon_id, customer_id, token, order_number):
@@ -341,15 +340,12 @@ class Coupon:
             }
         }
         with MongoConnection() as mongo:
-            if result := mongo.coupon.aggregate([
-                {"$match": {"couponId": self.coupon_id}},
-                {"$project": {
-                    "couponTokens": {
-
-                    }
-                }},
-            ]):
-                return
+            if result := mongo.coupon.update_one(
+                    {"couponId": self.coupon_id, "couponTokens.token": token, "couponTokens.customerId": customer_id},
+                    {"$inc": {"couponWholeSoldNumber": 1, "couponTokens.$.used" : 1}},
+                    # {"$arrayFilters": [{"couponTokens.token": token, "customerId": customer_id}, {"$upsert": False}]}
+            ):
+                return result.modified_count
 
     def use_private_coupon(self, coupon_id, customer_id, token, order_number):
         query_operator = {"couponId": self.coupon_id}
