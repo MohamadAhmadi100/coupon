@@ -13,10 +13,10 @@ class Token:
         return self.token
 
     def private_tokens_list_generator(self, prefix, token_quantity):
-        return [{"token": self.generator(prefix), "used": 0, "customerId": 0, "orderNumber": 0} for _ in
+        return [{"token": self.generator(prefix), "used": 0, "customerId": 0, "orderNumber": 0, "jalaliUsedTime": None} for _ in
                 range(token_quantity)]
 
     def public_tokens_list_generator(self, prefix, token_quantity):
         public_token = self.generator(prefix)
-        return [{"token": public_token, "used": 0, "customerId": 0, "orderNumber": 0} for _ in
+        return [{"token": public_token, "used": 0, "customerId": 0, "orderNumber": 0, "jalaliUsedTime": None} for _ in
                 range(token_quantity)]

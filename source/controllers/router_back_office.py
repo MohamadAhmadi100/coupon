@@ -127,9 +127,16 @@ def use_coupon(coupon_id: int, customer_id: int, token: str, order_number: int):
         return coupon.use_public_coupon(coupon_id, customer_id, token, order_number)
     else:
         result = coupon.use_private_coupon()
+
+
+def get_tokens(coupon_id):
+    coupon = Coupon(coupon_id=coupon_id)
+    if data := coupon.get_token_data():
+        return {"success": True, "message": data, "status_code": 200}
+    return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}
+
     # if coupon.deactivate():
     # return {"success": True, "message": "کد تخفیف با موفقیت ثبت شد", "status_code": 200}
     # return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}
-
 
 # print(use_coupon(1008, 100, "STRING-BEA5", 5666))

@@ -342,7 +342,7 @@ class Coupon:
         with MongoConnection() as mongo:
             if result := mongo.coupon.update_one(
                     {"couponId": self.coupon_id, "couponTokens.token": token, "couponTokens.customerId": customer_id},
-                    {"$inc": {"couponWholeSoldNumber": 1, "couponTokens.$.used" : 1}},
+                    {"$inc": {"couponWholeSoldNumber": 1, "couponTokens.$.used": 1}},
                     # {"$arrayFilters": [{"couponTokens.token": token, "customerId": customer_id}, {"$upsert": False}]}
             ):
                 return result.modified_count
@@ -364,3 +364,15 @@ class Coupon:
                     modify_operator,
             ):
                 return
+
+    def get_token_data(self):
+        query_operator = {"couponId": self.coupon_id}
+        projection_operator = {"_id": 0, "couponTokens": 1, "couponId": 1}
+        with MongoConnection() as mongo:
+            if result := mongo.coupon.find_one(
+                    query_operator,
+                    projection_operator,
+            ):
+                return result
+            return False
+
