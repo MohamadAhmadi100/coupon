@@ -8,7 +8,8 @@ from source.modules.getter import GetData
 
 
 def create_coupon(coupon_name: str, customer_sales_number: int, whole_sales_number: int, start_date: str, end_date: str,
-                  coupon_daily_sales_number: int, coupon_type: str, prefix: str = None, staff_user_id: int = 20000):
+                  coupon_daily_sales_number: int, coupon_type: str, customer_type: str, prefix: str = None,
+                  staff_user_id: int = 20000):
     coupon = Coupon(coupon_name=coupon_name)
     if coupon.is_coupon_name_exists():
         return {"success": False, "error": "نام کد تخفیف تکراری است", "status_code": 422}
@@ -21,7 +22,7 @@ def create_coupon(coupon_name: str, customer_sales_number: int, whole_sales_numb
     if coupon_id := coupon.save(customer_sales_number=customer_sales_number, whole_sales_number=whole_sales_number,
                                 coupon_daily_sales_number=coupon_daily_sales_number, start_date=start_date,
                                 end_date=end_date, coupon_type=coupon_type, prefix=prefix.upper(),
-                                tokens_list=tokens_list):
+                                tokens_list=tokens_list, customer_type= customer_type):
         log.save_create_log(coupon_id=coupon_name, staff_id=staff_user_id)
         return {"success": True, "message": "کد تخفیف با موفقیت ایجاد شد", "data": {"couponId": coupon_id},
                 "status_code": 201}
@@ -134,6 +135,15 @@ def get_tokens(coupon_id):
     if data := coupon.get_token_data():
         return {"success": True, "message": data, "status_code": 200}
     return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}
+
+
+def send_sms(staff_user_id, coupon_id, customer_list):
+    coupon = Coupon(coupon_id=coupon_id)
+    coupon_type = coupon.get_coupon_type()
+    if coupon_type == "public":
+
+    # return {"success": True, "message": data, "status_code": 200}
+        return {"success": False, "error": "مشکلی رخ داد. لطفا مجددا تلاش کنید", "status_code": 422}
 
     # if coupon.deactivate():
     # return {"success": True, "message": "کد تخفیف با موفقیت ثبت شد", "status_code": 200}

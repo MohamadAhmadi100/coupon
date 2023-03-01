@@ -25,6 +25,7 @@ class Coupon:
         self.bought_customer_ids: list = []
         self.bought_customer_groups: list = []
         self.prefix: str = prefix
+        self.customer_type: str = ""
 
     def get_next_sequence_coupon_id(self):
         """
@@ -74,7 +75,8 @@ class Coupon:
              end_date,
              coupon_type,
              prefix,
-             tokens_list
+             tokens_list,
+             customer_type
              ):
         if not self.get_next_sequence_coupon_id():
             return False
@@ -93,7 +95,8 @@ class Coupon:
             "couponType": coupon_type,
             "couponPrefix": prefix or None,
             "couponConditions": {},
-            "couponTokens": tokens_list
+            "couponTokens": tokens_list,
+            "customerType": customer_type
         }
         with MongoConnection() as mongo:
             result: object = mongo.coupon.insert_one(coupon_data)
@@ -375,4 +378,3 @@ class Coupon:
             ):
                 return result
             return False
-
